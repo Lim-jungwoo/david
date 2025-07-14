@@ -59,7 +59,10 @@ def main():
         print(result)
         return
     
-    print(f"Result: {float(result)}")
+    if isBonus.lower() == 'y':
+        print(f"Result: {float(result)}")
+    else:
+        print(f"Result: <{float(result)}>")
 
 if __name__ == "__main__":
     main()
