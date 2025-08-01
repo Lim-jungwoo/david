@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>3 Buttons Example</title>
+    <style>
+      button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>세 개의 버튼</h1>
+
+    <button id="button1">버튼 1</button>
+    <button id="button2">버튼 2</button>
+    <button id="button3">버튼 3</button>
+
+    <script>
+      document.getElementById("button1").addEventListener("click", function () {
+        alert("버튼 1이 눌렸습니다!");
+      });
+
+      document.getElementById("button2").addEventListener("click", function () {
+        alert("버튼 2이 눌렸습니다!");
+      });
+
+      document.getElementById("button3").addEventListener("click", function () {
+        alert("버튼 3이 눌렸습니다!");
+      });
+    </script>
+  </body>
+</html>

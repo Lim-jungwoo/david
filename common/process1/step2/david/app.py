@@ -46,5 +46,9 @@ def home():
         download_url = f"data:audio/mpeg;base64,{audio}"
     return render_template("index.html", error=error, audio=audio, download_url=download_url)
 
+@app.route("/menu")
+def menu():
+    return render_template("menu.html")
+
 if __name__ == '__main__':
     app.run('0.0.0.0', 80)
