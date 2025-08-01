@@ -9,26 +9,31 @@
         padding: 10px 20px;
         font-size: 16px;
       }
+
+      /* 녹차 버튼만 크기 변경 */
+      #button1 {
+        font-size: 70pt;
+      }
     </style>
   </head>
   <body>
     <h1>세 개의 버튼</h1>
 
-    <button id="button1">버튼 1</button>
-    <button id="button2">버튼 2</button>
-    <button id="button3">버튼 3</button>
+    <button id="button1">녹차</button>
+    <button id="button2">홍차</button>
+    <button id="button3">커피</button>
 
     <script>
       document.getElementById("button1").addEventListener("click", function () {
-        alert("버튼 1이 눌렸습니다!");
+        alert("녹차 주문 완료!");
       });
 
       document.getElementById("button2").addEventListener("click", function () {
-        alert("버튼 2이 눌렸습니다!");
+        alert("홍차 주문 완료!");
       });
 
       document.getElementById("button3").addEventListener("click", function () {
-        alert("버튼 3이 눌렸습니다!");
+        alert("커피 주문 완료!");
       });
     </script>
   </body>
