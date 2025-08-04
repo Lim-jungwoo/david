@@ -61,10 +61,6 @@ def menu():
 def test1():
     return render_template("test1.html")
 
-@app.route("/test2")
-def test2():
-    return render_template("test2.html")
-
 if __name__ == '__main__':
     print('디버그 모드: ' + ('True' if __debug__ == True else 'False'))
     app.run('0.0.0.0', 80, debug=True)
