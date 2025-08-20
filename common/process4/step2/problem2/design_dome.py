@@ -6,10 +6,10 @@ import sys
 MARS_GRAVITY = 0.38
 
 MATERIAL_DENSITY = {
-        'glass': 2.4,
-        'aluminum': 2.7,
-        'carbon_steel': 7.85
-    }
+    'glass': 2.4,
+    'aluminum': 2.7,
+    'carbon_steel': 7.85
+}
 '''
 재료별 밀도 (g/cm^3)
 
@@ -30,12 +30,13 @@ MATERIAL_EN_TO_KR_DICTIONARY = {
 
 EXIT_COMMAND = ['exit', 'quit', 'q', '종료', '끝내기']
 
+
 def is_valid_number(value: str) -> bool:
     invalid_values = ['inf', '-inf', 'nan']
 
     if value.lower() in invalid_values:
         return False
-    
+
     try:
         float(value)
     except ValueError:
@@ -88,6 +89,7 @@ def calculate_half_weight(diameter: float, thickness: float, material: str) -> f
 def calculate_mars_weight(weight: float) -> float:
     return weight * MARS_GRAVITY
 
+
 def sphere_area(diameter: float, material: str, thickness: float) -> {float, float}:
     'diameter, thickness는 m 단위로 입력받음'
 
@@ -112,6 +114,7 @@ def signal_handler(sig, frame):
     print('\n프로그램을 종료합니다.')
     sys.exit(0)
 
+
 def main():
     signal.signal(signal.SIGINT, signal_handler)  # Ctrl+C 시 종료 핸들러 설정
     while True:
@@ -125,12 +128,14 @@ def main():
         diameter = float(diameter)
 
         print('\n')
-        material = input('재료(material)를 입력하세요 (유리(glass), 알루미늄(aluminum), 탄소강(carbon_steel)): ')
+        material = input(
+            '재료(material)를 입력하세요 (유리(glass), 알루미늄(aluminum), 탄소강(carbon_steel)): ')
         if is_exit_command(material):
             print('프로그램을 종료합니다.')
             break
         if not is_valid_material(material):
-            print('\n재료(material)는 유리(glass), 알루미늄(aluminum), 탄소강(carbon_steel) 중 하나여야 합니다.\n')
+            print(
+                '\n재료(material)는 유리(glass), 알루미늄(aluminum), 탄소강(carbon_steel) 중 하나여야 합니다.\n')
             continue
         if MATERIAL_KR_TO_EN_DICTIONARY.get(material):
             material = MATERIAL_KR_TO_EN_DICTIONARY[material]
@@ -145,15 +150,17 @@ def main():
             thickness = 1.0
         else:
             thickness = float(thickness)
-        thickness /= 100 # cm to m
+        thickness /= 100  # cm to m
 
         try:
-            outer_surface_area, mars_half_weight = sphere_area(diameter, material, thickness)
+            outer_surface_area, mars_half_weight = sphere_area(
+                diameter, material, thickness)
             material_kr = MATERIAL_EN_TO_KR_DICTIONARY[material]
             print(f'재질 => {material_kr}, 지름 => {f3(diameter)}, 두께 => {f3(thickness * 100)}, 면적 => {f3(outer_surface_area)}, 무게 => {f3(mars_half_weight)}kg')
         except Exception as e:
             print(f'오류 발생: {e}')
             continue
+
 
 if __name__ == '__main__':
     main()
