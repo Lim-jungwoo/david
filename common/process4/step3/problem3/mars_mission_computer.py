@@ -27,7 +27,7 @@ ENV_RANGES = [
 DUMMY_SENSOR_LOG_FILE = 'logs/dummy_sensor_log.log'
 
 ENV_INTERVAL_TIME = 5
-ENV_AVG_INTERVAL_TIME = 1
+ENV_AVG_INTERVAL_TIME = 5
 
 SETTING_FILE_PATH = 'setting.txt'
 
@@ -369,6 +369,7 @@ def main():
 
         runComputer.get_mission_computer_info()
         runComputer.get_mission_computer_load()
+        runComputer.get_sensor_data(ENV_INTERVAL_TIME)
 
     except KeyboardInterrupt:
         print('\n' + Message.EXIT)
