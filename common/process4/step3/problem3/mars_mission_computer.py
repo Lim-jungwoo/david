@@ -287,11 +287,11 @@ class MissionComputer:
         try:
             self.system_info = SystemInfo()
         except Exception:
-            print_banner(Banner.SYSTEM_INFO_ERROR)
+            raise OSError(Banner.SYSTEM_INFO_ERROR)
         try:
             self.system_load = SystemLoad()
         except Exception:
-            print_banner(Banner.SYSTEM_LOAD_ERROR)
+            raise OSError(Banner.SYSTEM_LOAD_ERROR)
 
     def get_sensor_data(self, interval: int):
         next_run = time.time()
@@ -343,8 +343,7 @@ class MissionComputer:
             try:
                 self.system_info = SystemInfo()
             except Exception:
-                print_banner(Banner.SYSTEM_INFO_ERROR)
-                return
+                raise OSError(Banner.SYSTEM_INFO_ERROR)
         print_system_info_to_json(Banner.SYSTEM_INFO)
 
     def get_mission_computer_load(self):
@@ -352,17 +351,12 @@ class MissionComputer:
             try:
                 self.system_load = SystemLoad()
             except Exception:
-                print_banner(Banner.SYSTEM_LOAD_ERROR)
-                return
+                raise OSError(Banner.SYSTEM_LOAD_ERROR)
         print_system_load_to_json(Banner.SYSTEM_LOAD)
 
 
 def main():
     try:
-        # ds = DummySensor()
-        # ds.set_env()
-        # env = ds.get_env()
-
         runComputer = MissionComputer()
         global SETTING
         SETTING = Setting(SETTING_FILE_PATH)
