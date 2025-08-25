@@ -22,7 +22,7 @@ ENV_RANGES = [
 DUMMY_SENSOR_LOG_FILE = 'logs/dummy_sensor_log.log'
 
 ENV_INTERVAL_TIME = 5
-ENV_AVG_INTERVAL_TIME = 1
+ENV_AVG_INTERVAL_TIME = 5
 
 
 class LogEvent:
@@ -150,7 +150,7 @@ class MissionComputer:
 
         now = time.time()
         # test
-        period = 10
+        # period = 10
         if period <= now - self.avg_start_time:
             avg_env_values: dict[str, float] = {}
             for key, values in self.env_values_list.items():
