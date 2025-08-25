@@ -68,6 +68,7 @@ def main():
     ds = DummySensor()
     ds.set_env()
     env = ds.get_env()
+    print_env(env)
 
 
 if __name__ == '__main__':
