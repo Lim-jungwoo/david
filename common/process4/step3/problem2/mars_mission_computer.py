@@ -25,7 +25,7 @@ ENV_INTERVAL_TIME = 5
 ENV_AVG_INTERVAL_TIME = 1
 
 
-class LOG_EVENT:
+class LogEvent:
     INFO = 'INFO'
     WARNING = 'WARNING'
     ERROR = 'ERROR'
@@ -33,13 +33,13 @@ class LOG_EVENT:
     EXIT = 'EXIT'
 
 
-class BANNER:
-    env_5s = '5초 환경 정보 출력'
-    env_5m = '5분 환경 정보 출력'
+class Banner:
+    ENV_5S = '5초 환경 정보 출력'
+    ENV_5M = '5분 환경 정보 출력'
 
 
-class MESSAGE:
-    exit = 'System stoped···.'
+class Message:
+    EXIT = 'System stoped···.'
 
 
 def random_value(low: float, high: float, digits: int):
@@ -103,7 +103,7 @@ class DummySensor:
         with open(file_path, 'a', encoding='utf-8') as f:
             now = datetime.now().astimezone().isoformat(timespec='seconds')
             f.write(f'[{now}] {str(self.env_values)}\n')
-        print_log(LOG_EVENT.INFO, f'file saved -> {file_path}')
+        print_log(LogEvent.INFO, f'file saved -> {file_path}')
 
 
 class MissionComputer:
@@ -128,7 +128,7 @@ class MissionComputer:
         while True:
             self.ds.set_env()
             self.env_values = self.ds.get_env()
-            print_dict_to_json(BANNER.env_5s, self.env_values)
+            print_dict_to_json(Banner.ENV_5S, self.env_values)
 
             self.calculate_env_average(ENV_AVG_INTERVAL_TIME)
 
@@ -157,7 +157,7 @@ class MissionComputer:
                 avg = calculate_average(values)
                 avg_env_values.setdefault(key, avg)
 
-            print_dict_to_json(BANNER.env_5m, avg_env_values)
+            print_dict_to_json(Banner.ENV_5M, avg_env_values)
             self.env_values_list.clear()
 
             self.avg_start_time += period
@@ -167,17 +167,13 @@ class MissionComputer:
 
 def main():
     try:
-        ds = DummySensor()
-        ds.set_env()
-        env = ds.get_env()
-
         RunComputer = MissionComputer()
         RunComputer.get_sensor_data(ENV_INTERVAL_TIME)
 
     except KeyboardInterrupt:
-        print('\n' + MESSAGE.exit)
+        print('\n' + Message.EXIT)
     except Exception as e:
-        print_log(LOG_EVENT.ERROR, e)
+        print_log(LogEvent.ERROR, e)
 
 
 if __name__ == '__main__':
