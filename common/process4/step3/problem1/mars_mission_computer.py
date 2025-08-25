@@ -20,7 +20,7 @@ ENV_RANGES = [
 DUMMY_SENSOR_LOG_FILE = 'logs/dummy_sensor_log.log'
 
 
-class LOG_EVENT:
+class LogEvent:
     INFO = 'INFO'
     WARNING = 'WARNING'
     ERROR = 'ERROR'
@@ -61,7 +61,7 @@ class DummySensor:
         with open(file_path, 'a', encoding='utf-8') as f:
             now = datetime.now().astimezone().isoformat(timespec='seconds')
             f.write(f'[{now}] {str(self.env_values)}\n')
-        print_log(LOG_EVENT.INFO, f'file saved -> {file_path}')
+        print_log(LogEvent.INFO, f'file saved -> {file_path}')
 
 
 def main():
