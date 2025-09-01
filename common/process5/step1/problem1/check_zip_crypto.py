@@ -1,6 +1,29 @@
 import struct
 from binascii import crc32
 
+_crctable = None
+def _gen_crc(crc):
+    '''
+    CRC 계산
+    '''
+    # CRC(Cyclic Redundancy Check)는 데이터 블록을 다항식 나눗셈으로 본다.
+    # 8번 반복 -> 바이트 단위로 처리
+    for j in range(8):
+        # 최하위 비트가 1일 때
+        # 최하위 비트가 1이면, 다항식 나눗셈 과정에서 나눠떨어지지 않는다는 뜻
+        # -> 다항식(0xEDB88320)을 XOR 연산
+        # crc >> 1: 나눗셈에서 한 비트 이동
+        # XOR 0xEDB88320: 생성다항식으로 나눌 때, 나머지를 보정
+        if crc & 1:
+            crc = (crc >> 1) ^ 0xEDB88320
+        # 최하위 비트가 0일 때
+        # 다항식 나눗셈이 나눠떨어진다.
+        # -> 나눗셈에서 한 비트 이동
+        else:
+            crc >>= 1
+    return crc
+
+# def _crc_32_update(crc, ch):
 def _crc_32_update(c, b):
     '''
     CRC-32(IEEE)를 1바이트 b로 증분 갱신
@@ -10,7 +33,23 @@ def _crc_32_update(c, b):
     - & 0xffffffff로 32비트 정규화
     - ZipCrypto 키 스케줄에서 k0, k2를 갱신할 때 사용
     '''
-    return (crc32(bytes([b]), c) & 0xffffffff)
+    # ZipCrypto와 zlib은 서로 CRC 상태 포현이 다르다.
+    # ZipCrypto 내부 상태 c -> zlib 상태로 변환
+    z = c ^ 0xffffffff
+    # crc32(data, c): 이전 CRC c에서 시작해 data를 한 번 더 집어넣었을 때 새로운 CRC 반환
+    z = crc32(bytes([b]), z) & 0xffffffff
+    # zlib 상태 -> ZipCrypto 상태로 복귀
+    return (z ^ 0xffffffff) & 0xffffffff
+
+    # crc: 지금까지 누적된 CRC 값
+    # ch: 새로 추가되는 1바이트
+    # _crctable: 미리 계산해둔 CRC-32 테이블
+    # (crc ^ ch) & 0xFF: CRC의 하위 8비트와 새 바이트 ch를 XOR한 값을 테이블 인덱스로 사용
+    # - 새로운 바이트를 기존 CRC의 끝부분과 합쳐서 나눗셈 시작
+    # _crctable[...]: 인덱스를 사용해서 CRC 보정값을 테이블에서 가져온다
+    # crc >> 8: CRC를 8비트 오른쪽 시프트 - CRC가 한 바이트 처리된 것과 같은 효과
+    # 마지막 ^ 연산: 시프트한 CRC 상위 24비트와 보정값을 XOR -> 새로운 CRC 생성
+    # return (crc >> 8) ^ _crctable[(crc ^ ch) & 0xFF]
 
 
 def _init_keys(pwd: bytes):
@@ -19,6 +58,15 @@ def _init_keys(pwd: bytes):
     - k0, k1, k2 초기값은 ZipCrypto 스펙에 고정되어 있음
     '''
     k0, k1, k2 = 0x12345678, 0x23456789, 0x34567890
+    # k0 = 305419896
+    # k1 = 591751049
+    # k2 = 878082192
+
+    global _crctable
+    # 0~255까지의 바이트를 넣었을 때 CRC를 미리 테이블에 저장
+    if _crctable is None:
+        _crctable = list(map(_gen_crc, range(256)))
+
     for ch in pwd:
         # 비번이 들어올 수록 k0 누적 반영
         k0 = _crc_32_update(k0, ch)
@@ -101,6 +149,19 @@ def _decrypt_header12(enc12: bytes, pwd: bytes) -> bytes:
     return bytes(out)
 
 
+def _has_aes_extra(extra: bytes) -> bool:
+    i = 0
+    n = len(extra)
+    while i + 4 <= n:
+        tag, sz = struct.unpack_from('<HH', extra, i)
+        i += 4
+        if i + sz > n: break
+        if tag == 0x9901:   # AES extra
+            return True
+        i += sz
+    return False
+
+
 def zipcrypto_password_valid(zip_path: str, password: str, entry_index: int = 0) -> bool:
     '''
     ZipCrypto 암호화된 Zip 파일 비밀번호 검증
@@ -167,7 +228,7 @@ def zipcrypto_password_valid(zip_path: str, password: str, entry_index: int = 0)
             hdr = f.read(26)
             if len(hdr) < 26:
                 return False
-            ver, flag, comp, time, date, crc32, csize, usize, nlen, xlen = struct.unpack('<IHHHHHIIIHH', hdr)
+            ver, flag, comp, time, date, crc32, csize, usize, nlen, xlen = struct.unpack('<HHHHHIIIHH', hdr)
 
             # 비트0(암호화)이 켜져 있는지 확인
             encrypted = bool(flag & 0x0001)
@@ -179,9 +240,20 @@ def zipcrypto_password_valid(zip_path: str, password: str, entry_index: int = 0)
                 return False    # AES-Zip
             
             # 파일명/엑스트라 스킵하고 encrypted data 시작 위치로
-            f.seek(nlen + xlen, 1)
+            # f.seek(nlen + xlen, 1)
+            fname = f.read(nlen)
+            extra = f.read(xlen)
+
+            # print(f"flag=0x{flag:04x}, comp={comp}, nlen={nlen}, xlen={xlen}")
+            # print(f"time=0x{time:04x}, crc32=0x{crc32:08x}")
+
+            if _has_aes_extra(extra):
+                return False
+
+
             # 첫 12바이트 읽기(ZipCrypto header)
             enc12 = f.read(12)
+            # print(enc12)
             if len(enc12) < 12:
                 return False
             
@@ -189,11 +261,13 @@ def zipcrypto_password_valid(zip_path: str, password: str, entry_index: int = 0)
             dec12 = _decrypt_header12(enc12, pwd)
 
             # 검증 바이트 계산(1바이트만 검증, 우연히 맞을 확률 1/256 존재 -> 확실하지 않음)
-            # 검증 바이트: bit3 = 0 - time 상위 8비트(1바이트), bit3 = 1 - CRC의 상위 8비트(1바이트)
+            # 검증 바이트: bit3 = 1 - time 상위 8비트(1바이트), bit3 = 0 - CRC의 상위 8비트(1바이트)
             if flag & 0x0008:
                 check_byte = (time >> 8) & 0xff
             else:
                 check_byte = (crc32 >> 24) & 0xff
+
+            # print(dec12[-1], check_byte)
             
             return dec12[-1] == check_byte
         
