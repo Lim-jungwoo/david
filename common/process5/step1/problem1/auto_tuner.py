@@ -13,12 +13,35 @@ N = 36 ** (PWD_LENGTH - 5)
 # ZIP_PATH = 'test.zip'
 ZIP_PATH = 'emergency_storage_key.zip'
 
+POW = [len(CHARSET) ** p for p in range(PWD_LENGTH - 1, -1, -1)]
+
+
+def comp_make_password(ntries):
+    j = ''.join
+    start_itertools = time.perf_counter()
+    for tup in itertools.islice(itertools.product(CHARSET, repeat=PWD_LENGTH), ntries):
+        password = j(tup)
+    itertools_time = ntries / (time.perf_counter() - start_itertools)
+
+    start_index = time.perf_counter()
+    for rem in range(ntries):
+        password = []
+        for p in range(PWD_LENGTH):
+            digit, rem = divmod(rem, POW[p])
+            password.append(CHARSET[digit])
+        password = ''.join(password)
+    index_time = ntries / (time.perf_counter() - start_index)
+    return itertools_time, index_time
+
+
 def bench(ntries):
     j = ''.join
     t0 = time.perf_counter()
     for tup in itertools.islice(itertools.product(CHARSET, repeat=PWD_LENGTH), ntries):
         password = j(tup)
         zipcrypto_password_valid(ZIP_PATH, password)
+
+    
 
     return ntries / (time.perf_counter() - t0)
 
@@ -39,14 +62,30 @@ if __name__ == '__main__':
 
     max_core = 0
     max_total = 0
+    # 비밀번호 생성 및 검증 최적 코어 개수 계산
+    # 코어 개수 5 ~ 6이 최고 성능
+    # for P in range(1, 20):
+    #     with ctx.Pool(P) as pool:
+    #         rates = pool.map(bench, [N]*P)
+    #     total = sum(rates)
+    #     max_core = P if max_total < total else max_core
+    #     max_total = total if max_total < total else max_total
+    #     print(f'{P} workers: {total:.0f} tries/s (per-core {total/P:.0f})')
+    # print(f'Best Core Count: {max_core}, {max_total:.0f} tries/s')
+
+    # 비밀번호 생성 함수 성능 비교
+    # itertools 사용 vs index 사용
+    # itertools가 압도적으로 성능이 좋다.
     for P in range(1, 20):
         with ctx.Pool(P) as pool:
-            rates = pool.map(bench, [N]*P)
-        total = sum(rates)
-        max_core = P if max_total < total else max_core
-        max_total = total if max_total < total else max_total
-        print(f'{P} workers: {total:.0f} tries/s (per-core {total/P:.0f})')
-    print(f'Best Core Count: {max_core}, {max_total:.0f} tries/s')
+            result = pool.map(comp_make_password, [N]*P)
+        total_itertools_time = 0
+        total_index_time = 0
+        for p in range(P):
+            total_itertools_time += result[p][0]
+            total_index_time += result[p][1]
+        print(f'\n{P} workers itertools: {total_itertools_time:.0f} tries/s (per-core {total_itertools_time/P:.0f})')
+        print(f'{P} workers index: {total_index_time:.0f} tries/s (per-core {total_index_time/P:.0f})\n')
     # password = '012345'
     # password = 'mars06'
     # result = zipcrypto_password_valid(ZIP_PATH, password)
