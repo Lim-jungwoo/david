@@ -1,23 +1,54 @@
 import multiprocessing as mp
+from multiprocessing.synchronize import Event as mpEvent
 import string, time, itertools
+from check_zip_crypto import *
+import zipfile, zlib
+
+
 
 CHARSET = string.digits + string.ascii_lowercase
-LENGTH = 6
+PWD_LENGTH = 6
+N = 36 ** (PWD_LENGTH - 5)
+
+# ZIP_PATH = 'test.zip'
+ZIP_PATH = 'emergency_storage_key.zip'
 
 def bench(ntries):
     j = ''.join
     t0 = time.perf_counter()
-    for tup in itertools.islice(itertools.product(CHARSET, repeat=LENGTH), ntries):
-        _ = j(tup)
+    for tup in itertools.islice(itertools.product(CHARSET, repeat=PWD_LENGTH), ntries):
+        password = j(tup)
+        zipcrypto_password_valid(ZIP_PATH, password)
+
     return ntries / (time.perf_counter() - t0)
 
 if __name__ == '__main__':
+    # spawn: 완전히 새 파이썬 인터프리터 프로세스를 띄운 뒤, 필요한 객체만 직렬화(pickle)해서 전달
+    # 부모 상태를 거의 복제하지 않음 - 안전하지만 느리다
+    # if __name__ == '__main__'를 사용하지 않으면 무한 재귀로 터진다.
+    # force: 다른 start method가 설정되어 있어도 강제로 spawn으로 바꾼다.
+    # 새 프로세스를 무조건 spawn 방식으로 만든다.
+    # 전역 설정
     mp.set_start_method('spawn', force=True)
+
+    # 컨텍스트(context): 멀티프로세싱에서 프로세스, 큐, 락 등 IPC(Inter Process Communication, 프로세스 간 통신) 객체를 start method 규약에 맞춰 생성, 관리할지를 캡슐화한 객체
+    # multiprocessing에서 spwan으로 동작하는 컨텍스트 객체를 가져온다.
+    # 지역 설정
     ctx = mp.get_context('spawn')
-    N = 10_000_000
-    for P in (2, 4, 6, 8, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30):
+
+
+    max_core = 0
+    max_total = 0
+    for P in range(1, 20):
         with ctx.Pool(P) as pool:
             rates = pool.map(bench, [N]*P)
         total = sum(rates)
+        max_core = P if max_total < total else max_core
+        max_total = total if max_total < total else max_total
         print(f'{P} workers: {total:.0f} tries/s (per-core {total/P:.0f})')
+    print(f'Best Core Count: {max_core}, {max_total:.0f} tries/s')
+    # password = '012345'
+    # password = 'mars06'
+    # result = zipcrypto_password_valid(ZIP_PATH, password)
+    # print(result)
 
