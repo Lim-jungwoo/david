@@ -7,6 +7,8 @@ POLY = 0xEDB88320
 
 MASK_32 = 0xFFFFFFFF
 
+CRC_TABLE = None
+
 def crc32_bitwise(data: bytes, crc: int = 0) -> int:
     '''비트 단위 CRC32 (가장 단순한 구현, 매 바이트당 8번 루프하므로 느리다.)'''
     crc ^= MASK_32
@@ -26,9 +28,19 @@ def _make_crc_table():
     table = []
     for i in range(256):
         crc = i
+        # CRC(Cyclic Redundancy Check)는 데이터 블록을 다항식 나눗셈으로 본다.
+        # 8번 반복 -> 바이트 단위로 처리
         for _ in range(8):
+            # 최하위 비트가 1일 때
+            # 최하위 비트가 1이면, 다항식 나눗셈 과정에서 나눠떨어지지 않는다는 뜻
+            # -> 다항식(0xEDB88320)을 XOR 연산
+            # crc >> 1: 나눗셈에서 한 비트 이동
+            # XOR POLY: 생성다항식으로 나눌 때, 나머지를 보정
             if crc & 1:
                 crc = ((crc >> 1) ^ POLY) & MASK_32
+            # 최하위 비트가 0일 때
+            # 다항식 나눗셈이 나눠떨어진다.
+            # -> 나눗셈에서 한 비트 이동
             else:
                 crc = (crc >> 1) & MASK_32
         table.append(crc & MASK_32)
@@ -39,7 +51,8 @@ def _make_crc_table():
 
 def _make_crc_table_8():
     '''slicing-by-8용 8개 테이블 생성'''
-    crc_table = _make_crc_table()
+    if CRC_TABLE is None:
+        crc_table = _make_crc_table()
     T = [crc_table]
     for k in range(1, 8):
         Tk = [0] * 256
@@ -54,17 +67,46 @@ def _make_crc_table_8():
     return T
 
 
-def crc32_table(data: bytes, crc: int = 0) -> int:
-    '''테이블 기반 CRC32 (빠르다)'''
-    crc = (crc ^ MASK_32) & MASK_32
+def crc32_table(data: bytes, crc: int = 0, zlib: bool = True) -> int:
+    '''
+    테이블 기반 CRC32 (빠르다)
+    zlib: True - zlib.crc32와 동일하게 작동
+    zlib: False - 처음, 끝 XOR 연산 없이 작동
+    zlib에서는 처음과 끝에 crc에 XOR 연산을 하는데, ZipCrypto에서 crc를 사용해서 key를 만들 때는 crc를 그대로 사용한다.
+    그래서 zlib을 False로 주면 ZipCrypto에서 key를 만들 때, crc를 XOR연산 없이 그대로 사용할 수 있다.
+    '''
+    # crc: 지금까지 누적된 CRC 값
+    # data: 새로 추가되는 데이터 바이트
+    # CRC_TABLE: 미리 계산해둔 CRC-32 테이블
+    # (crc ^ b) & 0xFF: CRC의 하위 8비트와 새 바이트 b를 XOR한 값을 테이블 인덱스로 사용
+    # - 새로운 바이트를 기존 CRC의 끝부분과 합쳐서 나눗셈 시작
+    # CRC_TABLE[...]: 인덱스를 사용해서 CRC 보정값을 테이블에서 가져온다
+    # crc >> 8: CRC를 8비트 오른쪽 시프트 - CRC가 한 바이트 처리된 것과 같은 효과
+    # 마지막 ^ 연산: 시프트한 CRC 상위 24비트와 보정값을 XOR -> 새로운 CRC 생성
+    if CRC_TABLE is None:
+        _make_crc_table()
+    if zlib:
+        crc = (crc ^ MASK_32) & MASK_32
     for b in data:
         crc = (CRC_TABLE[(crc ^ b) & 0xFF] ^ (crc >> 8)) & MASK_32
-    return (crc ^ MASK_32) & MASK_32
+    if zlib:
+        return (crc ^ MASK_32) & MASK_32
+    return crc & MASK_32
 
 
-def crc32_slicing_by_8(data: bytes, crc: int = 0) -> int:
-    '''slicing-by-8 CRC-32 (polynomial 0xEDB88320). zlib.crc32와 동일 결과'''
-    crc = (crc ^ MASK_32) & MASK_32
+def crc32_slicing_by_8(data: bytes, crc: int = 0, zlib: bool = True) -> int:
+    '''
+    slicing-by-8 CRC-32 (polynomial 0xEDB88320).
+    zlib: True - zlib.crc32와 동일하게 작동
+    zlib: False - 처음, 끝 XOR 연산 없이 작동
+    zlib에서는 처음과 끝에 crc에 XOR 연산을 하는데, ZipCrypto에서 crc를 사용해서 key를 만들 때는 crc를 그대로 사용한다.
+    그래서 zlib을 False로 주면 ZipCrypto에서 key를 만들 때, crc를 XOR연산 없이 그대로 사용할 수 있다.
+    '''
+    if CRC_TABLE is None:
+        _make_crc_table_8()
+
+    if zlib:
+        crc = (crc ^ MASK_32) & MASK_32
     n = len(data)
     i = 0
 
@@ -92,7 +134,9 @@ def crc32_slicing_by_8(data: bytes, crc: int = 0) -> int:
         crc = (T0[(crc ^ data[i]) & 0xFF] ^ (crc >> 8)) & MASK_32
         i += 1
 
-    return (crc ^ MASK_32) & MASK_32
+    if zlib:
+        return (crc ^ MASK_32) & MASK_32
+    return crc
 
 
 if __name__ == '__main__':
