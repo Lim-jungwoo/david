@@ -14,10 +14,10 @@ $$
 
 여기서
 
-- \( W \): 가중치 행렬 (weight matrix)
-- \( b \): 편향 (bias)
-- \( f \): 활성화 함수 (activation function)
-- \( y \): 출력값
+- $W$: 가중치 행렬 (weight matrix)
+- $b$: 편향 (bias)
+- $f$: 활성화 함수 (activation function)
+- $y$: 출력값
 
 ---
 
@@ -25,7 +25,7 @@ $$
 
 ### 1. 회귀(Regression)
 
-- **정의**: 입력 데이터를 바탕으로 **연속적인 값(실수)**을 예측하는 문제
+- **정의**: 입력 데이터를 바탕으로 **연속적인 값**(실수)을 예측하는 문제
 - **출력층 활성화 함수**: 보통 항등 함수(Identity function)
 - **손실 함수 예시**: 평균제곱오차(MSE, Mean Squared Error)
 
@@ -39,7 +39,7 @@ $$
 
 ### 2. 분류(Classification)
 
-- **정의**: 입력 데이터를 바탕으로 **범주(category, class)**를 예측하는 문제
+- **정의**: 입력 데이터를 바탕으로 **범주**(category, class)를 예측하는 문제
 - **출력층 활성화 함수**
   - 이진 분류(Binary Classification): Sigmoid
   - 다중 분류(Multi-class Classification): Softmax
