@@ -22,9 +22,8 @@ $$
 
    - 도함수(derivative)는 아래와 같이 간단합니다.
 
-     $$
-     \sigma'(x) = \sigma(x)\bigl(1 - \sigma(x)\bigr)
-     $$
+     $\sigma'(x) = \sigma(x)\bigl(1 - \sigma(x)\bigr)
+     $
 
 3. **성질**
    - $\sigma(0) = 0.5$
@@ -38,14 +37,6 @@ $$
 - **로지스틱 회귀(Logistic Regression)**: 사건이 발생할 **확률**을 출력
 - **신경망(Neural Network)**: 활성화 함수로 사용 (현재는 ReLU, *Rectified Linear Unit*가 더 보편적)
 - **이진 분류(Binary Classification)**: 출력층에서 확률 모델링
-
----
-
-## 렌더링 팁
-
-- 이 파일은 수식에 **$...$**(인라인), **$$...$$**(블록) 표기를 사용했습니다.
-- GitHub, Obsidian, VS Code의 일부 확장 등 **MathJax/KaTeX** 를 지원하는 뷰어에서 올바르게 렌더링됩니다.
-- Jekyll(예: GitHub Pages) 테마를 쓰는 경우, MathJax/KaTeX 활성화 설정이 필요할 수 있습니다.
 
 ---
 
