@@ -9,10 +9,27 @@ $$
 \text{softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^{K} e^{z_j}}
 $$
 
-- \( z_i \): 입력값 (logit, 신경망의 마지막 선형 변환 결과)
-- \( K \): 클래스 개수
-- 출력: \( 0 \leq \text{softmax}(z_i) \leq 1 \)
-- 합: \(\sum\_{i=1}^K \text{softmax}(z_i) = 1\)
+- 입력값: $$( z_i $$) (logit, 신경망의 마지막 선형 변환 결과)  
+- 클래스 개수: \( K \)  
+
+**Softmax 정의:**
+
+$$
+\text{softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^K e^{z_j}}
+$$
+
+**출력 범위:**
+
+$$
+0 \leq \text{softmax}(z_i) \leq 1
+$$
+
+**합의 성질:**
+
+$$
+\sum_{i=1}^K \text{softmax}(z_i) = 1
+$$
+
 
 ---
 
